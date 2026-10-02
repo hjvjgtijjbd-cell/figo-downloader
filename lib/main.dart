@@ -3,29 +3,47 @@ void main() => runApp(FigoApp());
 class FigoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, title: 'Figo Downloader', theme: ThemeData.dark(), home: HomePage());
+    return MaterialApp(debugShowCheckedModeBanner: false, home: MainNav());
   }
 }
-class HomePage extends StatefulWidget {
+class MainNav extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  State<MainNav> createState() => _MainNavState();
 }
-class _HomePageState extends State<HomePage> {
-  TextEditingController linkController = TextEditingController();
-  String status = "لسق رابط الفيديو هنا";
+class _MainNavState extends State<MainNav> {
+  int current = 0;
+  final names = ["TikTok", "Facebook", "Instagram", "Pinterest"];
+  final icons = [Icons.music_note, Icons.facebook, Icons.camera_alt, Icons.push_pin];
+  final controller = TextEditingController();
+  String status = "";
+  void download() {
+    String url = controller.text.toLowerCase();
+    if (url.isEmpty) { setState(()=> status = "دخل الرابط"); return; }
+    bool ok = url.contains("tiktok") || url.contains("facebook") || url.contains("fb.watch") || url.contains("instagram") || url.contains("pinterest") || url.contains("pin.it");
+    if (!ok) { setState(()=> status = "هاد الرابط ماشي من المنصات 4 المدعومة"); return; }
+    setState(()=> status = "جاري التحميل من ${names[current]} ✅");
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("برنامج تنزيل فيجو", style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.redAccent, centerTitle: true),
-      body: Padding(padding: EdgeInsets.all(16), child: Column(children: [
-        TextField(controller: linkController, decoration: InputDecoration(hintText: "https://www.youtube.com/watch?v=...", labelText: "رابط الفيديو", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), prefixIcon: Icon(Icons.link), filled: true)),
-        SizedBox(height: 16),
-        ElevatedButton.icon(style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, minimumSize: Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: (){setState(() {if(linkController.text.isEmpty){status = "عافاك دخل الرابط أولا";} else {status = "جاري تحليل الرابط...\n${linkController.text}";}});}, icon: Icon(Icons.download, size: 28), label: Text("تحميل الآن", style: TextStyle(fontSize: 18))),
-        SizedBox(height: 24),
-        Expanded(child: GridView.count(crossAxisCount: 3, children: [platform("YouTube", Icons.play_circle_fill, Colors.red), platform("Facebook", Icons.facebook, Colors.blue), platform("Instagram", Icons.camera_alt, Colors.purple), platform("TikTok", Icons.music_note, Colors.black), platform("Twitter", Icons.flutter_dash, Colors.lightBlue), platform("WhatsApp", Icons.chat, Colors.green)])),
-        Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[900], borderRadius: BorderRadius.circular(12)), child: Text(status, textAlign: TextAlign.center))
+      appBar: AppBar(title: Text("Figo - ${names[current]}"), backgroundColor: Colors.pink),
+      body: Padding(padding: EdgeInsets.all(20), child: Column(children: [
+        Icon(icons[current], size: 80, color: Colors.pink),
+        SizedBox(height: 20),
+        TextField(controller: controller, decoration: InputDecoration(labelText: "رابط ${names[current]}", border: OutlineInputBorder(), prefixIcon: Icon(Icons.link))),
+        SizedBox(height: 20),
+        SizedBox(width: double.infinity, height: 50, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white), onPressed: download, child: Text("تحميل من ${names[current]}"))),
+        SizedBox(height: 20), Text(status, textAlign: TextAlign.center),
       ])),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: current, onTap: (i)=> setState(()=> current = i), type: BottomNavigationBarType.fixed, selectedItemColor: Colors.pink,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.music_note), label: "TikTok"),
+          BottomNavigationBarItem(icon: Icon(Icons.facebook), label: "Facebook"),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: "Instagram"),
+          BottomNavigationBarItem(icon: Icon(Icons.push_pin), label: "Pinterest"),
+        ],
+      ),
     );
   }
-  Widget platform(String name, IconData icon, Color color){return Card(color: Colors.grey[850], child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 40), SizedBox(height: 8), Text(name)]));}
 }
