@@ -14,12 +14,13 @@ jobs:
           flutter-version: '3.22.2'
           channel: 'stable'
       - run: flutter pub get
-      - name: Fix old android folder
+      - name: Recreate android folder
         run: |
           rm -rf android
-          flutter create. --platforms=android
+          flutter create. --platforms android --org com.figo.app
+          flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
-          name: figo-downloader-apk
+          name: figo-apk
           path: build/app/outputs/flutter-apk/app-release.apk
