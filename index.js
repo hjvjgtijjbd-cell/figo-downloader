@@ -1,10 +1,57 @@
-const { Telegraf } = require('telegraf');
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const express = require('express');
+const { spawn } = require('child_process');
+const path = require('path');
+const cors = require('cors');
 
-bot.start((ctx) => ctx.reply('✅ FIGO BOT خدام! مرحبا بيك'));
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-bot.on('text', (ctx) => {
-  ctx.reply('وصلك: ' + ctx.message.text);
+app.get('/', (req, res) => {
+  res.send('Figo Downloader API is Running ✅ Use /download?url=...');
 });
 
-bot.launch().then(()=>console.log('Bot online')).catch(e=>console.error(e));
+app.get('/download', async (req, res) => {
+  const videoUrl = req.query.url;
+  if (!videoUrl) {
+    return res.status(400).json({ error: 'خاصك تعطي رابط ?url=' });
+  }
+
+  try {
+    const pythonProcess = spawn('python3', ['downloader.py', videoUrl]);
+    
+    let dataString = '';
+    let errorString = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+      dataString += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      errorString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        console.log(errorString);
+        return res.status(500).json({ error: 'فشل التحميل', details: errorString });
+      }
+      try {
+        const result = JSON.parse(dataString);
+        res.json(result);
+      } catch (e) {
+        res.json({ url: dataString.trim() });
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+module.exports = app;
